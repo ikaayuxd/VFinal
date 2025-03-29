@@ -6,7 +6,7 @@ from itertools import cycle
 url = 'https://t.me/LuxterCodes/9'
 
 # Proxy list - FORMAT: ip:port or ip:port:user:pass
-with open('VFinal/formatted_ips.txt', 'r') as file:
+with open('./formatted_ips.txt', 'r') as file:
     proxies = [line.strip() for line in file.readlines()]
 proxy_pool = cycle(proxies)
 
