@@ -14,12 +14,10 @@ REGEX = compile(
 
 
 class ViewBot:
-    def __init__(self, channel, post, http_sources=[], socks4_sources=[], socks5_sources=[], tasks=250):
+    def __init__(self, channel, post, proxy_file_path, tasks=250):
         self.channel = channel
         self.post = post
-        self.http_sources = http_sources
-        self.socks4_sources = socks4_sources
-        self.socks5_sources = socks5_sources
+        self.proxy_file_path = proxy_file_path
         self.tasks = tasks
         self.proxies = []
         self.success_sent = 0
@@ -28,31 +26,18 @@ class ViewBot:
         self.cookie_error = 0
         self.token_error = 0
 
-    async def scrap(self, source_url, proxy_type):
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(source_url, timeout=10) as response:
-                    if response.status == 200:
-                        proxies = REGEX.findall(await response.text())
-                        for proxy in proxies:
-                            self.proxies.append((proxy[0], proxy_type)) # Store proxy and type
-                    else:
-                        print(f"Error scraping proxies from {source_url}: Status code {response.status}")
-        except Exception as e:
-            print(f"Error scraping proxies from {source_url}: {e}")
-
-    async def request(self, proxy, proxy_type):
+    async def request(self, proxy):
         connector = aiohttp.TCPConnector(limit=0)
-        if proxy_type != "http": # Use socks connector if not HTTP
-            try:
-                connector = aiohttp.ProxyConnector.from_url(f"{proxy_type}://{proxy[0]}")
-            except Exception as e:
-                print(f"Error creating proxy connector: {e}")
-                self.proxy_error += 1
-                return # if proxy connector invalid - stop processing
-
+        
+        try:
+            connector = aiohttp.ProxyConnector.from_url(f"http://{proxy}")
+        except Exception as e:
+            print(f"Error creating proxy connector: {e}")
+            self.proxy_error += 1
+            return # if proxy connector invalid - stop processing
 
         jar = aiohttp.CookieJar(unsafe=True)
+        
         async with aiohttp.ClientSession(cookie_jar=jar, connector=connector) as session:
             try:
                 async with session.get(
@@ -103,10 +88,10 @@ class ViewBot:
             finally:
                 jar.clear()
 
-    def run_proxies_tasks(self, lines: list, proxy_type):
-        async def inner(proxies: list):
+    def run_proxies_tasks(self, lines):
+        async def inner(proxies):
             await asyncio.gather( # Use gather for better exception handling
-                *[asyncio.create_task(self.request(proxy, proxy_type)) for proxy in proxies]
+                *[asyncio.create_task(self.request(proxy)) for proxy in proxies]
             )
 
         chunks = [lines[i:i + self.tasks] for i in range(0, len(lines), self.tasks)]
@@ -115,16 +100,21 @@ class ViewBot:
 
     async def init(self): # __init__ for initialization
         tasks = []
-        self.proxies.clear() # Clear existing proxies before scraping new list of proxies
-        for sources in (
-                (self.http_sources, 'http'),
-                (self.socks4_sources, 'socks4'),
-                (self.socks5_sources, 'socks5')
-        ):
-            srcs, proxy_type = sources
-            for source_url in srcs:
-                task = asyncio.create_task(
-                    self.scrap(source_url, proxy_type)
-                )
-                tasks.append(task)
+        with open(self.proxy_file_path) as file:
+            proxies = file.read().splitlines()
+        
+        self.proxies = proxies
+        
         await asyncio.gather(*tasks) # gather for better exception handling
+
+async def main():
+    channel = "LuxterCodes"
+    post = "9"
+    proxy_file_path = "proxies.txt"
+    tasks = 250
+
+    bot = ViewBot(channel, post, proxy_file_path, tasks)
+    await bot.init()
+
+if __name__ == "__main__":
+    asyncio.run(main())
