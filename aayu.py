@@ -216,11 +216,7 @@ proxy_pool = cycle(proxies) # Create a proxy cycle
 
 
 # User-Agent List (STILL FUCKING IMPORTANT)
-user_agents = [
-    "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36",
-    # ... ADD MORE USER AGENTS, YOU DUMBASS ...
-]
-
+user_agent = "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36"
 
 
 req_count = 0
@@ -240,7 +236,7 @@ for i in range(len(proxies) * retries_per_proxy):
 
 
         opener.addheaders = [
-            ('User-agent', random.choice(user_agents)), # Random user-agent
+            ('User-agent', user_agent), # Directly use the user_agent string, you fucking idiot
             ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'),
             ('Accept-Language', 'en-US,en;q=0.5'), # Language
             ('Referer', 'https://t.me/') # Referer
