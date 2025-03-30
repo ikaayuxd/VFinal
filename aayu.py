@@ -88,16 +88,6 @@ class ViewBot:
             finally:
                 jar.clear()
 
-    def run_proxies_tasks(self, lines):
-        async def inner(proxies):
-            await asyncio.gather( # Use gather for better exception handling
-                *[asyncio.create_task(self.request(proxy)) for proxy in proxies]
-            )
-
-        chunks = [lines[i:i + self.tasks] for i in range(0, len(lines), self.tasks)]
-        for chunk in chunks:
-            asyncio.run(inner(chunk))
-
     async def init(self): # __init__ for initialization
         tasks = []
         with open(self.proxy_file_path) as file:
@@ -105,12 +95,62 @@ class ViewBot:
         
         self.proxies = proxies
         
+        for chunk in range(0, len(proxies), self.tasks):
+            tasks.append(asyncio.create_task(self.request_proxies(proxies[chunk:chunk+self.tasks])))
+        
         await asyncio.gather(*tasks) # gather for better exception handling
 
+    async def request_proxies(self, proxies):
+        connector = aiohttp.TCPConnector(limit=0)
+        
+        async with aiohttp.ClientSession(connector=connector) as session:
+            for proxy in proxies:
+                try:
+                    connector = aiohttp.ProxyConnector.from_url(f"http://{proxy}")
+                    async with session.get(
+                        f'https://t.me/{self.channel}/{self.post}?embed=1&mode=tme',
+                        headers={
+                            'referer': f'https://t.me/{self.channel}/{self.post}',
+                            'user-agent': user_agent # Still single user-agent - VERY BAD. Needs rotation
+                        },
+                        timeout=aiohttp.ClientTimeout(total=5),
+                        raise_for_status=True # raise error for bad status codes (4xx or 5xx)
+                    ) as embed_response:
+                        views_token = search('data-view="([^"]+)"', await embed_response.text())
+                        if views_token:
+                            try:
+                                views_response = await session.post(
+                                    'https://t.me/v/?views=' + views_token.group(1),
+                                    headers={
+                                        'referer': f'https://t.me/{self.channel}/{self.post}?embed=1&mode=tme',
+                                        'user-agent': user_agent, # Again, needs rotation
+                                        'x-requested-with': 'XMLHttpRequest'
+                                    },
+                                    timeout=aiohttp.ClientTimeout(total=5)
+                                )
+                                views_response.raise_for_status() # same here
+                                if await views_response.text() == "true":
+                                    self.success_sent += 1
+                                else:
+                                    self.failed_sent += 1 # Assuming server issues, bad proxy, rate limiting, etc.
+                            except aiohttp.ClientError as e:
+                                print(f"Error during views request: {e}")
+                                self.failed_sent += 1 # HTTP errors
+                            except Exception as e:
+                               print(f"Other type of error during views request: {e}")
+                               self.failed_sent += 1 # Any other errors
+
+                except aiohttp.ClientError as e:
+                    print(f"Error during embed request: {e}")
+                    self.proxy_error +=1
+                except Exception as e: # Catching general exceptions
+                    print(f"Other error during request: {e}")
+                    self.proxy_error += 1 # Count as proxy error (likely connection issue)
+
 async def main():
-    channel = "LuxterCodes"
-    post = "9"
-    proxy_file_path = "proxies.txt"
+    channel = "your_channel"
+    post = "your_post"
+    proxy_file_path = ../proxies.txt
     tasks = 250
 
     bot = ViewBot(channel, post, proxy_file_path, tasks)
