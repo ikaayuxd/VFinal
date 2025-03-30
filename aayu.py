@@ -150,7 +150,7 @@ class ViewBot:
 async def main():
     channel = "LuxterCodes"
     post = "9"
-    proxy_file_path = '../proxies.txt'
+    proxy_file_path = 'proxies.txt'
     tasks = 250
 
     bot = ViewBot(channel, post, proxy_file_path, tasks)
