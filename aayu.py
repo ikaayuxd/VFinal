@@ -1,59 +1,49 @@
 import requests
 import random
 import time
-from itertools import cycle
+import urllib.request
+import ssl
 
 url = 'https://t.me/LuxterCodes/9'
 
-# Proxy list - FORMAT: ip:port or ip:port:user:pass
-with open('../formatted_ips.txt', 'r') as file:
-    proxies = [line.strip() for line in file.readlines()]
-proxy_pool = cycle(proxies)
+# Residential Proxy Setup - Format: protocol://user:pass@ip:port
+proxy = 'http://brd-customer-hl_5ad1b94c-zone-residential_proxy1:0lgchw232zru@brd.superproxy.io:33335'
 
-
-# User-Agent List (Spoof like a motherfucker)
+# User-Agent List (Spoofing is still essential, you twat)
 user_agents = [
     "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36",
-    # Add more user-agents, you lazy fuck
+    # Add more, you lazy shit
 ]
 
-
 req_count = 0
-retries = 3 # Retries per proxy
+retries = 3 # Retries in case the residential proxy shits the bed
 
-for i in range(len(proxies) * retries): # Iterate through proxies with retries
+for i in range(retries): # Retry logic for the residential proxy
     try:
-        proxy = next(proxy_pool)
-        session = requests.session()
-        session.proxies = {
-            'http': f'http://{proxy}',
-            'https': f'http://{proxy}'
-        }
 
-        session.headers = {
-            'accept-language': 'en-US,en;q=0.9',
-            'user-agent': random.choice(user_agents), # Randomize User-Agent
-            'x-requested-with': 'XMLHttpRequest'
-        }
+        opener = urllib.request.build_opener(
+            urllib.request.ProxyHandler({'https': proxy, 'http': proxy}),
+            urllib.request.HTTPSHandler(context=ssl._create_unverified_context())
+        )
 
-        main_res = session.get(url)
-        if main_res.status_code != 200:
-            raise Exception(f"Shitty status code: {main_res.status_code}")
+        # Pretend to be a browser, you idiot
+        opener.addheaders = [('User-agent', random.choice(user_agents))] 
+        urllib.request.install_opener(opener) # Install the opener, you fucking moron
 
+        # Fetch the main page content
+        with urllib.request.urlopen(url) as main_res:
+            _token = main_res.read().decode().split('data-view="')[1].split('"')[0]
 
-        _token = main_res.text.split('data-view="')[1].split('"')[0]
+        # Send the view request
+        views_url = f"https://t.me/v/?views={_token}"
+        with urllib.request.urlopen(views_url) as views_req:
+            print(f'[+] View Sent - Status Code: {views_req.getcode()}') # Get the status code correctly, dumbass
+            req_count += 1
+            time.sleep(random.uniform(1, 3)) # Random delay to avoid looking like a bot, you dipshit
 
-
-        views_req = session.get(f"https://t.me/v/?views={_token}")
-        if views_req.status_code != 200:
-            raise Exception(f"View request failed: {views_req.status_code}")
-
-        print(f'[+] View Sent - Proxy: {proxy}, Status Code: {views_req.status_code}')
-        req_count += 1
-        time.sleep(random.uniform(1,3)) # Random delay to avoid detection, dumbass
 
     except Exception as e:
-        print(f'Failed to send view using proxy {proxy}: {e}, Retrying...')
-        # Don't fucking exit on error, retry with another proxy
+        print(f'Failed to send view: {e}, Retrying...')
 
-print(f'Total views sent: {req_count}, You fucking legend!')
+
+print(f'Total views sent: {req_count}, You magnificent bastard!')
