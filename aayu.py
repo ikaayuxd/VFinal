@@ -1,257 +1,130 @@
-import urllib.request
-import ssl
-import time
-import random
-from itertools import cycle
+import asyncio
+import aiohttp
+from re import compile, search
 
-url = 'https://t.me/LuxterCodes/9'
-
-proxies = [
-    'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-158.46.166.29:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-158.46.169.117:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.58.92:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.58.97:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.112:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.113:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.116:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.117:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.118:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-158.46.167.209:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-158.46.170.107:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.90.37:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.58.170:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.58.211:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.13:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.15:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.23:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.32:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.37:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.41:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.43:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.47:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.48:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.51:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.53:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.57:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.62:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.67:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.70:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.72:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.74:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.82:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.86:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.88:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.93:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.107:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.110:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.111:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.114:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.117:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.118:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.123:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.127:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.128:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.131:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.137:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.138:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.142:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.146:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.148:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.157:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.158:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.162:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.165:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.168:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.171:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.175:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.180:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.182:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.189:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.190:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.192:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.193:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.195:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.196:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.198:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.199:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.201:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.206:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.210:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.215:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.216:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.222:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.223:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.226:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.233:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.234:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.236:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.237:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.239:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.240:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.242:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.116.252:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.0:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.1:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.4:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.6:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.7:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.8:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.12:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.13:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.18:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.19:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.20:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.21:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.26:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.29:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.42:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.48:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.50:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.51:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.54:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.55:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.56:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.57:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.58:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.62:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.63:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.64:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.65:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.69:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.72:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.73:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.76:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.78:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.81:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.83:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.88:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.90:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.92:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.117.96:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.90.71:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.90.83:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.90.94:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.90.211:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.90.212:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.91.62:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.91.82:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.91.93:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.91.118:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.91.142:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.91.150:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.91.245:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.58.52:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.58.71:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.58.72:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.58.236:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.58.246:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.59.19:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.59.34:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.59.78:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.59.92:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.59.113:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.59.149:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.59.245:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.59.254:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.2:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.3:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.4:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.5:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.6:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.7:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.8:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.9:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.12:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.13:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.14:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.15:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.16:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.17:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.18:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.19:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.20:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.21:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.22:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.23:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.24:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.25:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.26:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.27:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.28:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.29:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.30:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.31:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.32:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.33:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.34:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.35:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.36:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.37:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.38:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.39:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.40:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.41:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.42:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.43:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.44:l4px1qej3sdb@brd.superproxy.io:33335',
-'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.45:l4px1qej3sdb@brd.superproxy.io:33335'
-
-]
-proxy_pool = cycle(proxies)
-
-user_agent = "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36" # Your single user agent (still a terrible idea)
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36" # Rotating user-agents is highly recommended
+REGEX = compile(
+    r"(?:^|\D)?(("+ r"(?:[1-9]|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])"
+    + r"\." + r"(?:\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])"
+    + r"\." + r"(?:\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])"
+    + r"\." + r"(?:\d|[1-9]\d|1\d{2}|2[0-4]\d|25[0-5])"
+    + r"):" + (r"(?:\d|[1-9]\d{1,3}|[1-5]\d{4}|6[0-4]\d{3}"
+    + r"|65[0-4]\d{2}|655[0-2]\d|6553[0-5])")
+    + r")(?:\D|$)")
 
 
-req_count = 0
-retries_per_proxy = 3
+class ViewBot:
+    def __init__(self, channel, post, http_sources=[], socks4_sources=[], socks5_sources=[], tasks=250):
+        self.channel = channel
+        self.post = post
+        self.http_sources = http_sources
+        self.socks4_sources = socks4_sources
+        self.socks5_sources = socks5_sources
+        self.tasks = tasks
+        self.proxies = []
+        self.success_sent = 0
+        self.failed_sent = 0
+        self.proxy_error = 0
+        self.cookie_error = 0
+        self.token_error = 0
 
-
-for i in range(len(proxies) * retries_per_proxy):
-    try:
-        proxy = next(proxy_pool)
-        print(f"Trying proxy: {proxy}") # Print the proxy being used
-
-        opener = urllib.request.build_opener(
-            urllib.request.ProxyHandler({'http': proxy, 'https': proxy}),
-            urllib.request.HTTPSHandler(context=ssl._create_unverified_context())
-        )
-
-        opener.addheaders = [
-            ('User-agent', user_agent),
-            ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'),
-            ('Accept-Language', 'en-US,en;q=0.5'),
-            ('Referer', 'https://t.me/')
-        ]
-        urllib.request.install_opener(opener)
-
+    async def scrap(self, source_url, proxy_type):
         try:
-            with urllib.request.urlopen(url, timeout=10) as main_res: # Added timeout
-                if main_res.getcode() != 200:
-                    raise Exception(f"Shitty status code from main page: {main_res.getcode()}")
-                try:
-                    html_content = main_res.read().decode()
-                    _token = html_content.split('data-view="')[1].split('"')[0]
-                except IndexError:
-                    print(f"Error: 'data-view' not found using proxy {proxy}. Telegram might have changed its structure.")
-                    continue
+            async with aiohttp.ClientSession() as session:
+                async with session.get(source_url, timeout=10) as response:
+                    if response.status == 200:
+                        proxies = REGEX.findall(await response.text())
+                        for proxy in proxies:
+                            self.proxies.append((proxy[0], proxy_type)) # Store proxy and type
+                    else:
+                        print(f"Error scraping proxies from {source_url}: Status code {response.status}")
+        except Exception as e:
+            print(f"Error scraping proxies from {source_url}: {e}")
 
-            views_url = f"https://t.me/v/?views={_token}"
-
-
-            with urllib.request.urlopen(views_url, timeout=10) as views_req: # Timeout here too
-                if views_req.getcode() != 200:
-                     raise Exception(f"View request failed: {views_req.getcode()}")
-                print(f'[+] View Sent - Proxy: {proxy}, Status Code: {views_req.getcode()}')
-                req_count += 1
-
-            time.sleep(random.uniform(2, 5))
-
-        except urllib.error.URLError as e:
-            print(f"URL Error with proxy {proxy}: {e.reason}. Check the proxy address and port.")
-            continue # Skip to the next proxy/retry
+    async def request(self, proxy, proxy_type):
+        connector = aiohttp.TCPConnector(limit=0)
+        if proxy_type != "http": # Use socks connector if not HTTP
+            try:
+                connector = aiohttp.ProxyConnector.from_url(f"{proxy_type}://{proxy[0]}")
+            except Exception as e:
+                print(f"Error creating proxy connector: {e}")
+                self.proxy_error += 1
+                return # if proxy connector invalid - stop processing
 
 
-    except Exception as e:
-        print(f'Failed to send view using proxy {proxy}: {e}, Retrying...')
+        jar = aiohttp.CookieJar(unsafe=True)
+        async with aiohttp.ClientSession(cookie_jar=jar, connector=connector) as session:
+            try:
+                async with session.get(
+                        f'https://t.me/{self.channel}/{self.post}?embed=1&mode=tme',
+                        headers={
+                            'referer': f'https://t.me/{self.channel}/{self.post}',
+                            'user-agent': user_agent # Still single user-agent - VERY BAD. Needs rotation
+                        },
+                        timeout=aiohttp.ClientTimeout(total=5),
+                        raise_for_status=True # raise error for bad status codes (4xx or 5xx)
+                ) as embed_response:
 
-print(f'Total views sent: {req_count}')
+
+                    views_token = search('data-view="([^"]+)"', await embed_response.text())
+                    if views_token:
+                        try:
+                            views_response = await session.post(
+                                'https://t.me/v/?views=' + views_token.group(1),
+                                headers={
+                                    'referer': f'https://t.me/{self.channel}/{self.post}?embed=1&mode=tme',
+                                    'user-agent': user_agent, # Again, needs rotation
+                                    'x-requested-with': 'XMLHttpRequest'
+                                },
+                                timeout=aiohttp.ClientTimeout(total=5)
+                            )
+                            views_response.raise_for_status() # same here
+                            if await views_response.text() == "true":
+                                self.success_sent += 1
+                            else:
+                                self.failed_sent += 1 # Assuming server issues, bad proxy, rate limiting, etc.
+                        except aiohttp.ClientError as e:
+                            print(f"Error during views request: {e}")
+                            self.failed_sent += 1 # HTTP errors
+                        except Exception as e:
+                           print(f"Other type of error during views request: {e}")
+                           self.failed_sent += 1 # Any other errors
+
+
+
+                    else:
+                        self.token_error += 1
+            except aiohttp.ClientError as e:
+                print(f"Error during embed request: {e}")
+                self.proxy_error +=1
+            except Exception as e: # Catching general exceptions
+                print(f"Other error during request: {e}")
+                self.proxy_error += 1 # Count as proxy error (likely connection issue)
+            finally:
+                jar.clear()
+
+    def run_proxies_tasks(self, lines: list, proxy_type):
+        async def inner(proxies: list):
+            await asyncio.gather( # Use gather for better exception handling
+                *[asyncio.create_task(self.request(proxy, proxy_type)) for proxy in proxies]
+            )
+
+        chunks = [lines[i:i + self.tasks] for i in range(0, len(lines), self.tasks)]
+        for chunk in chunks:
+            asyncio.run(inner(chunk))
+
+    async def init(self): # __init__ for initialization
+        tasks = []
+        self.proxies.clear() # Clear existing proxies before scraping new list of proxies
+        for sources in (
+                (self.http_sources, 'http'),
+                (self.socks4_sources, 'socks4'),
+                (self.socks5_sources, 'socks5')
+        ):
+            srcs, proxy_type = sources
+            for source_url in srcs:
+                task = asyncio.create_task(
+                    self.scrap(source_url, proxy_type)
+                )
+                tasks.append(task)
+        await asyncio.gather(*tasks) # gather for better exception handling
