@@ -1,6 +1,7 @@
 import urllib.request
 import ssl
 import time
+import random
 from itertools import cycle
 
 url = 'https://t.me/LuxterCodes/9'
@@ -194,19 +195,21 @@ proxies = [
 'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.43:l4px1qej3sdb@brd.superproxy.io:33335',
 'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.44:l4px1qej3sdb@brd.superproxy.io:33335',
 'brd-customer-hl_5ad1b94c-zone-datacenter_proxy2-ip-178.171.38.45:l4px1qej3sdb@brd.superproxy.io:33335'
+
 ]
 proxy_pool = cycle(proxies)
 
-# SINGLE USER-AGENT (YOU DUMB FUCK)
-user_agent = "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36"
+user_agent = "Mozilla/5.0 (Linux; Android 10; SM-G981B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.162 Mobile Safari/537.36" # Your single user agent (still a terrible idea)
 
 
 req_count = 0
 retries_per_proxy = 3
 
+
 for i in range(len(proxies) * retries_per_proxy):
     try:
         proxy = next(proxy_pool)
+        print(f"Trying proxy: {proxy}") # Print the proxy being used
 
         opener = urllib.request.build_opener(
             urllib.request.ProxyHandler({'http': proxy, 'https': proxy}),
@@ -214,28 +217,39 @@ for i in range(len(proxies) * retries_per_proxy):
         )
 
         opener.addheaders = [
-            ('User-agent', user_agent), # DIRECTLY USING THE SINGLE USER-AGENT, YOU MORON
+            ('User-agent', user_agent),
             ('Accept', 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'),
             ('Accept-Language', 'en-US,en;q=0.5'),
             ('Referer', 'https://t.me/')
-            # ADD MORE HEADERS, YOU FUCKING CRETIN!
         ]
         urllib.request.install_opener(opener)
 
-        with urllib.request.urlopen(url) as main_res:
-            if main_res.getcode() != 200:
-                raise Exception(f"Shitty status code from main page: {main_res.getcode()}")
-            _token = main_res.read().decode().split('data-view="')[1].split('"')[0] # Check for empty string here
+        try:
+            with urllib.request.urlopen(url, timeout=10) as main_res: # Added timeout
+                if main_res.getcode() != 200:
+                    raise Exception(f"Shitty status code from main page: {main_res.getcode()}")
+                try:
+                    html_content = main_res.read().decode()
+                    _token = html_content.split('data-view="')[1].split('"')[0]
+                except IndexError:
+                    print(f"Error: 'data-view' not found using proxy {proxy}. Telegram might have changed its structure.")
+                    continue
 
-        views_url = f"https://t.me/v/?views={_token}"
-        with urllib.request.urlopen(views_url) as views_req:
-            if views_req.getcode() != 200:
-                raise Exception(f"View request failed: {views_req.getcode()}")
+            views_url = f"https://t.me/v/?views={_token}"
 
-            print(f'[+] View Sent - Proxy: {proxy}, Status Code: {views_req.getcode()}')
-            req_count += 1
 
-        time.sleep(random.uniform(2, 5))
+            with urllib.request.urlopen(views_url, timeout=10) as views_req: # Timeout here too
+                if views_req.getcode() != 200:
+                     raise Exception(f"View request failed: {views_req.getcode()}")
+                print(f'[+] View Sent - Proxy: {proxy}, Status Code: {views_req.getcode()}')
+                req_count += 1
+
+            time.sleep(random.uniform(2, 5))
+
+        except urllib.error.URLError as e:
+            print(f"URL Error with proxy {proxy}: {e.reason}. Check the proxy address and port.")
+            continue # Skip to the next proxy/retry
+
 
     except Exception as e:
         print(f'Failed to send view using proxy {proxy}: {e}, Retrying...')
