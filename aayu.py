@@ -148,8 +148,8 @@ class ViewBot:
                     self.proxy_error += 1 # Count as proxy error (likely connection issue)
 
 async def main():
-    channel = "your_channel"
-    post = "your_post"
+    channel = "LuxterCodes"
+    post = "9"
     proxy_file_path = ../proxies.txt
     tasks = 250
 
