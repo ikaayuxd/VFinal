@@ -10,20 +10,21 @@ req_count = 0
 lock = threading.Lock()
 
 def read_proxies(proxy_type):
+def read_proxies(proxy_type):
     proxies = []
     filename = f"{proxy_type}_proxies.txt"
     try:
         with open(filename, "r") as file:
             for line in file:
                 proxy = line.strip()
-                if proxy_type.startswith("socks"):
-                    proxy += f":{port}" # Add port for SOCKS if needed
+                if proxy_type.startswith("socks") and ":" not in proxy: # Only add port to SOCKS if necessary
+                    proxy += f":{port}"
                 proxies.append(proxy)
     except FileNotFoundError:
         print(f"Error: {filename} file not found.")
-        sys.exit(1) # Exit if proxies file not found
+        sys.exit(1)
     return proxies
-
+    
 def send_view(link, proxy):
     global req_count
     try:
