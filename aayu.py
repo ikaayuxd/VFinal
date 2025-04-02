@@ -2,9 +2,6 @@ import requests
 import random
 import sys
 import threading
-import psutil
-import os
-import time
 
 #=================================[PROXY]==========================================
 def read_proxies():
@@ -22,10 +19,7 @@ def read_proxies():
 
 def socks4_start(link):
     global proxy_4, count, req_count
-    while proxy_4 != []:
-        if req_count >= int(count):
-            p = psutil.Process(os.getpid())
-            p.terminate()
+    while req_count < int(count):
         proxy = random.choice(proxy_4)
         try:
             session = requests.session()
@@ -39,7 +33,6 @@ def socks4_start(link):
             _token = main_res.text.split('data-view="')[1].split('"')[0]
             views_req = session.get("https://t.me/v/?views=" + _token)
             print(' [+] View Sent ' + 'Stats Code: '+str(views_req.status_code))
-            proxy_4.remove(proxy)
             req_count += 1
         except:
             pass
@@ -57,10 +50,8 @@ try:
     
     if sys.argv[2] == "socks4":
         proxy_4 = read_proxies()
-        while True:
-            for ii in range(600):
-                threading.Thread(target=socks4_start,args=(url_fin,)).start()
-            time.sleep(60)  # Delay for 60 seconds before sending views again
+        for _ in range(int(count)):
+            threading.Thread(target=socks4_start,args=(url_fin,)).start()
 
     # Modify the other conditions (socks5, http, mix) in a similar way.
     
