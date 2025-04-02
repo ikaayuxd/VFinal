@@ -3,35 +3,31 @@ import random
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
+import time
 
-# Global variables (generally try to minimize these)
+# Global variables
 req_count = 0
-lock = threading.Lock() # For thread-safe incrementing of req_count
+lock = threading.Lock()
 
-#=================================[PROXY]==========================================
-def read_proxies(proxy_type): # Make proxy reading more flexible
+def read_proxies(proxy_type):
     proxies = []
-    filename = f"{proxy_type}_proxies.txt" # Construct filename based on type
+    filename = f"{proxy_type}_proxies.txt"
     try:
         with open(filename, "r") as file:
             for line in file:
                 proxy = line.strip()
-                if proxy_type.startswith("socks"): # Add port for SOCKS proxies only if needed.
-                    proxy += f":{port}"
+                if proxy_type.startswith("socks"):
+                    proxy += f":{port}" # Add port for SOCKS if needed
                 proxies.append(proxy)
     except FileNotFoundError:
         print(f"Error: {filename} file not found.")
+        sys.exit(1) # Exit if proxies file not found
     return proxies
 
-#=================================[DEF]==========================================
-
-def send_view(link, proxy, proxy_type):
+def send_view(link, proxy):
     global req_count
     try:
-        proxies = {
-            'http': f'{proxy_type}://{proxy}',
-            'https': f'{proxy_type}://{proxy}'
-        } if proxy else None # Conditional proxies
+        proxies = {'http': f'http://{proxy}', 'https': f'http://{proxy}'} if proxy else None
 
         session = requests.Session()
         if proxies:
@@ -42,52 +38,45 @@ def send_view(link, proxy, proxy_type):
             'x-requested-with': 'XMLHttpRequest'
         })
 
-        main_res = session.get(link)
-        main_res.raise_for_status() # Check for bad status codes (4xx or 5xx)
+        main_res = session.get(link, timeout=10) # Add timeout
+        main_res.raise_for_status()
 
         _token = main_res.text.split('data-view="')[1].split('"')[0]
-        views_req = session.get("https://t.me/v/?views=" + _token)
+        views_req = session.get("https://t.me/v/?views=" + _token, timeout=10) # Add timeout
         views_req.raise_for_status()
 
-        with lock: # Thread-safe increment
+
+        with lock:
             req_count += 1
-            print(f' [+] View Sent {req_count}/{count} Stats Code: {views_req.status_code}')
+            print(f' [+] View Sent {req_count}/{count} Stats Code: {views_req.status_code} Proxy: {proxy if proxy else "None"}')
+        time.sleep(random.uniform(1,3))
 
     except requests.exceptions.RequestException as e:
-        print(f"Request error: {e}")
+        print(f"Request error: {e} Proxy: {proxy if proxy else 'None'}")
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error: {e} Proxy: {proxy if proxy else 'None'}")
 
 
 
-#=================================[START]==========================================
 if __name__ == "__main__":
     try:
         link = sys.argv[1].strip().replace('https://', '').replace('http://', '')
-        proxy_type = sys.argv[2].lower()
+        proxy_type = sys.argv[2].lower() # Get proxy type from command-line
         count = int(sys.argv[3])
-        port = 33335 # Port - adjust if needed
+
+        port = 33335 # Only used if you're using SOCKS proxies
         url_fin = f'https://{link}?embed=1'
 
-
-        proxies = read_proxies(proxy_type)
-
-        with ThreadPoolExecutor(max_workers=100) as executor: # Limiting number of workers
-            futures = [executor.submit(send_view, url_fin, random.choice(proxies) if proxies else None, proxy_type) for _ in range(count)]
+        proxies = read_proxies(proxy_type) if proxy_type != "none" else [] # Handle "none" for no proxies
 
 
-            # (Optional) You could process the results of the futures here if needed:
-            # for future in concurrent.futures.as_completed(futures):
-            #     try:
-            #         future.result() # retrieve the result (or exception)
-            #     except Exception as e:
-            #         print(f"A thread failed: {e}")
-
+        with ThreadPoolExecutor(max_workers=100) as executor:
+            futures = [executor.submit(send_view, url_fin, random.choice(proxies) if proxies else None) for _ in range(count)]
 
 
     except IndexError:
         print("""Error. Usage: python3 seen.py <link> <type> <count>
-Types: http, socks4, socks5, mix""")
+Types: http, socks4, socks5, mix, none""") # Added "none" option
     except ValueError:
         print("Error: Invalid count. Please enter an integer.")
     except Exception as e:
