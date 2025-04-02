@@ -4,6 +4,7 @@ import sys
 import threading
 import psutil
 import os
+import time
 
 #=================================[PROXY]==========================================
 def read_proxies():
@@ -56,8 +57,10 @@ try:
     
     if sys.argv[2] == "socks4":
         proxy_4 = read_proxies()
-        for ii in range(600):
-            threading.Thread(target=socks4_start,args=(url_fin,)).start()
+        while True:
+            for ii in range(600):
+                threading.Thread(target=socks4_start,args=(url_fin,)).start()
+            time.sleep(60)  # Delay for 60 seconds before sending views again
 
     # Modify the other conditions (socks5, http, mix) in a similar way.
     
