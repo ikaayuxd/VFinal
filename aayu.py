@@ -11,19 +11,23 @@ lock = threading.Lock()
 
 def read_proxies(proxy_type):
     proxies = []
-    filename = f"{proxy_type}_proxies.txt"
-    try:
-        with open(filename, "r") as file:
-            for line in file:
-                proxy = line.strip()
-                if proxy_type.startswith("socks") and ":" not in proxy:
-                    proxy += f":{port}"
-                proxies.append(proxy)
-    except FileNotFoundError:
-        print(f"Error: {filename} file not found.")
-        sys.exit(1)
+    filename = f"{proxy_type}_proxies.txt" if proxy_type != "none" else None
+    if filename:
+        try:
+            with open(filename, "r") as file:
+                for line in file:
+                    proxy = line.strip()
+                    if ":" not in proxy: # Add port if not already present (for BOTH HTTP and SOCKS now)
+                        proxy = f"{proxy}:{port}" 
+                    proxies.append(proxy)
+        except FileNotFoundError:
+            print(f"Error: {filename} file not found.")
+            sys.exit(1)
+        except Exception as e:
+            print(f"An unexpected error occurred while reading proxies: {e}")
+            sys.exit(1)
     return proxies
-
+    
 def send_view(link, proxy):
     global req_count
     try:
